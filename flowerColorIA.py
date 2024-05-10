@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 x_entry = np.array(([3, 1.5],[2,1],[4,1.5],[3,1],[3.5,0.5],[2,0.5],[5.5,1],[1,1],[4.5,1.5]),dtype=float) # Longueur et Largeur en entrée de l'Ia sous forme de tableau
 y = np.array(([1],[0],[1],[0],[1],[0],[1],[0]),dtype=float) # Données de sortie = 1:rouge | 0:blue
@@ -87,23 +88,39 @@ class Neural_Network(object):
             print("La fleure est BLEU")
         else:
             print("La fleure est ROUGE !")
-    
-NN = Neural_Network()
 
-output = NN.forward(X)
+# Vérifie si le fichier de sauvegarde existe déjà
+try:
+    # Charger les poids du réseau de neurones
+    with open('neural_network_weights.pkl', 'rb') as f:
+        NN = pickle.load(f)
 
-for i in range(100000):
-    print("# " + str(i) + "\n")
-    print("Valeur d'entrées: \n" + str(X))
-    print("Sortie actuelle: \n" + str(y))
+except FileNotFoundError:
+    # Si le fichier de sauvegarde n'existe pas, créer un nouveau réseau de neurones
+    NN = Neural_Network()
 
-    # Arrondi les valeurs au deux décimales apres la virgules 
-    print("Sortie predite: \n" + str(np.matrix.round(NN.forward(X),2)))
-    NN.train(X,y)
+    output = NN.forward(X)
 
-NN.predict()
+    for i in range(10000000):
+        print("# " + str(i) + "\n")
+        print("Valeur d'entrées: \n" + str(X))
+        print("Sortie actuelle: \n" + str(y))
 
-print("----------------------------------------------")
+        # Arrondi les valeurs au deux décimales apres la virgules 
+        print("Sortie predite: \n" + str(np.matrix.round(NN.forward(X),2)))
+        NN.train(X,y)
+
+        # Condition pour sauvegarder toutes les 1000 itérations
+        if i % 1000 == 0:
+            # Sauvegarder les poids du réseau de neurones en écrasant le fichier précédent
+            with open('neural_network_weights.pkl', 'wb') as f:
+                pickle.dump(NN, f)
+
+    NN.predict()
+
+    # Sauvegarder les poids du réseau de neurones
+    with open('neural_network_weights.pkl', 'wb') as f:
+        pickle.dump(NN, f)
 
 def predict_after_train():
 
