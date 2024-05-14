@@ -1,5 +1,10 @@
 import numpy as np
+import sys
+import keyboard
 import pickle
+
+print("-------------------------------------------------------------------------------")
+print("All imports init !")
 
 x_entry = np.array(([3, 1.5],[2,1],[4,1.5],[3,1],[3.5,0.5],[2,0.5],[5.5,1],[1,1],[4.5,1.5]),dtype=float) # Longueur et Largeur en entrée de l'Ia sous forme de tableau
 y = np.array(([1],[0],[1],[0],[1],[0],[1],[0]),dtype=float) # Données de sortie = 1:rouge | 0:blue
@@ -8,6 +13,9 @@ x_entry_formated = x_entry/np.max(x_entry, axis=0) # Retourne des valeur proport
 
 X = np.split(x_entry_formated, [8])[0] # Recupere seulement les 8 premieres valeur du tableau formaté et les stock dans X
 xPrediction = np.split(x_entry_formated, [8])[1] # Donne la derniere valeur pour la prediction
+
+print("Start vars formated !")
+print("-------------------------------------------------------------------------------")
 
 class Neural_Network(object):
     def __init__(self) -> None:
@@ -87,39 +95,39 @@ class Neural_Network(object):
         if(self.forward(xPrediction) < 0.5):
             print("La fleure est BLEU")
         else:
-            print("La fleure est ROUGE !")
+            print("La fleure est ROUGE !")  
 
-# Vérifie si le fichier de sauvegarde existe déjà
-try:
-    # Charger les poids du réseau de neurones
-    with open('neural_network_weights.pkl', 'rb') as f:
-        NN = pickle.load(f)
 
-except FileNotFoundError:
-    # Si le fichier de sauvegarde n'existe pas, créer un nouveau réseau de neurones
+def create_new_NN_and_train():
     NN = Neural_Network()
 
     output = NN.forward(X)
 
-    for i in range(10000000):
-        print("# " + str(i) + "\n")
-        print("Valeur d'entrées: \n" + str(X))
-        print("Sortie actuelle: \n" + str(y))
+    for i in range(1000000):
+        sys.stdout.write("\rGénération number : " + str(i))
+        sys.stdout.flush()
+        # print("Valeur d'entrées: \n" + str(X))
+        # print("Sortie actuelle: \n" + str(y))
+
+        # Arrêt de l'entraînement si la touche espace est enfoncée
+        if keyboard.is_pressed('space'):
+            print("\nEntraînement interrompu par l'utilisateur.")
+            break
 
         # Arrondi les valeurs au deux décimales apres la virgules 
-        print("Sortie predite: \n" + str(np.matrix.round(NN.forward(X),2)))
+        # print("Sortie predite: \n" + str(np.matrix.round(NN.forward(X),2)))
         NN.train(X,y)
 
         # Condition pour sauvegarder toutes les 1000 itérations
         if i % 1000 == 0:
             # Sauvegarder les poids du réseau de neurones en écrasant le fichier précédent
-            with open('neural_network_weights.pkl', 'wb') as f:
+            with open('FlowerIA_neural_network_trained.pkl', 'wb') as f:
                 pickle.dump(NN, f)
-
+        
     NN.predict()
 
     # Sauvegarder les poids du réseau de neurones
-    with open('neural_network_weights.pkl', 'wb') as f:
+    with open('FlowerIA_neural_network_trained.pkl', 'wb') as f:
         pickle.dump(NN, f)
 
 def predict_after_train():
@@ -131,8 +139,11 @@ def predict_after_train():
     # Combination des valeurs dans un tableau
     user_input = np.array([[l, L]])
 
+    print("Brut user input: " + str(user_input))
+
     # Formatation des valeurs saisies
-    user_input_formatted = user_input / np.max(user_input, axis=0)
+    user_input_formatted = user_input / np.max(x_entry, axis=0)
+    print("Formatted user input: " + str(user_input_formatted))
 
     # Prediction a partir des valeurs de l'utilisateur
     user_predict_result = NN.forward(user_input_formatted)
@@ -143,6 +154,31 @@ def predict_after_train():
         print("La fleure est BLEU")
     else:
         print("La fleure est ROUGE !")
+
+# Vérifie si le fichier de sauvegarde existe déjà
+try:
+    # Charger les poids du réseau de neurones
+    with open('FlowerIA_neural_network_trained.pkl', 'rb') as f:
+
+        print("Fichier de sauvegarde de poids de synapses deja existant !")
+
+        if(input("Voulez vous le charger ? : ")) == "y":
+
+            print("Sauvegarde de poids de synapses chargé !")
+            print("\b")
+
+            NN = pickle.load(f)
+        else:
+            create_new_NN_and_train()
+
+
+except FileNotFoundError:
+
+    print("Pas de fichier de sauvegarde de poids de synapses trouvé !")
+    print("Création et entrainement d'un nouveau NN")
+
+    # Si le fichier de sauvegard\be n'existe pas, créer un nouveau réseau de neurones
+    create_new_NN_and_train() 
 
 while True:
     predict_after_train()
